@@ -13,6 +13,7 @@ import com.luiz.server.packets.Packet;
 import com.luiz.server.packets.Packet.PacketTypes;
 import com.luiz.server.packets.Packet00Login;
 import com.luiz.server.packets.Packet01Disconnect;
+import com.luiz.server.packets.Packet02Move;
 
 public class Server extends Thread {
 	
@@ -64,7 +65,6 @@ public class Server extends Thread {
 				System.out.println("["+address.getHostAddress()+":"+
 						port+"] "+((Packet01Disconnect) packet).getUsername()+
 							" has left the game...");
-				
 				for(Client c : this.connectedClients) {
 					if(c.ipAddress.equals(address)) {
 						if(c.username.equalsIgnoreCase(((Packet01Disconnect)packet).getUsername())) {
@@ -75,6 +75,15 @@ public class Server extends Thread {
 					}
 				}
 				System.out.println("error: client doesnt exit");
+				break;
+			case MOVE:
+				packet = new Packet02Move(data);
+				System.out.println("["+address.getHostAddress()+":"+
+						port+"] "+((Packet02Move) packet).getUsername()+
+							" moving...");
+				for(Client c : this.connectedClients) {
+					sendMessage(packet.getData(), c.ipAddress, c.port);
+				}
 				break;
 		}
 	}
@@ -90,7 +99,6 @@ public class Server extends Thread {
 			//tells the current client that other clients existed b4 he logged in
 			Packet00Login other_packet = new Packet00Login(c.username);
 			sendMessage(other_packet.getData(), client.ipAddress, client.port);
-			
 		}
 		this.connectedClients.add(client);
 	}
@@ -98,7 +106,7 @@ public class Server extends Thread {
 	public void removeConnection(Client client, Packet01Disconnect packet) {
 		for(Client c : this.connectedClients) {
 			if(!c.username.equalsIgnoreCase(client.username))
-			//tells other clients that the current one has connected
+			//tells other clients that the current one has disconnected
 			sendMessage(packet.getData(), c.ipAddress, c.port);
 		}
 		this.connectedClients.remove(client);
